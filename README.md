@@ -1,6 +1,11 @@
 # Zero Trust 
 A decentralised trustless system built to solve the problem of investing trust in the second party in a business and getting dissapointed, but rather on a platform built on the blockchain which is accessible to everybody
 
+# Preview 
+![image](https://user-images.githubusercontent.com/111018723/190308394-6909cd20-53c5-46e4-910a-3f1d6dde7376.png)
+![image](https://user-images.githubusercontent.com/111018723/190308774-71ba5640-a881-4e66-8a54-4a6093f54219.png)
+
+
 # Hosted URL 
 Click [here](https://adamtigre.github.io/zero-trust) to launch app
 
