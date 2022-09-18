@@ -31,6 +31,25 @@ contract ZeroBond {
         admin = payable(msg.sender);
     }
 
+    modifier onlyAdmin(){
+        require(msg.sender == admin, "Only admin can access this function");
+        _;
+    }
+
+    modifier isSigned(uint _bondId){
+        require(bonds[_bondId].signed == true,
+            "Bond has not been signed"
+        );
+        _;
+    }
+
+    modifier isValidated(uint _bondId){
+        require(bonds[_bondId].validated == true,
+            "Bond has not been validated"
+        );
+        _;        
+    }
+
     // Create a new bond
     // Anyone can create a bond, but the two parties involved has to
     // sign before the bond can be approved
@@ -58,7 +77,7 @@ contract ZeroBond {
 
     // Sign a bond in order for the bond to be considered for validation
     // Only second party involved can sign bond
-    function signBond(uint256 _bondId) public {
+    function signBond(uint256 _bondId) public isSigned(_bondId){
         Bond storage bond = bonds[_bondId];
         require(
             msg.sender == bond.parties[1],
@@ -70,21 +89,14 @@ contract ZeroBond {
     // Validatea a bond
     // Only the admin can validate a bond
     // A bond can only be validated if it is signed by second party
-    function validateBond(uint256 _bondId) public {
+    function validateBond(uint256 _bondId) public onlyAdmin isSigned(_bondId){
         Bond storage bond = bonds[_bondId];
-        require(msg.sender == admin, "Only admin can validate bond");
-        require(
-            bond.signed == true,
-            "Bond has not been signed by second party before it can be validated"
-        );
         bond.validated = true;
     }
 
     // User confirms they have completed their part of deal
-    function makeConfirmation(uint256 _bondId) public payable {
+    function makeConfirmation(uint256 _bondId) public payable isSigned(_bondId) isValidated(_bondId){
         Bond storage bond = bonds[_bondId];
-        require(bond.signed == true, "Bond not signed yet");
-        require(bond.validated = true, "Bond not validated yet");
         address creator = bond.parties[0];
         address secondParty = bond.parties[1];
         require(
@@ -108,10 +120,8 @@ contract ZeroBond {
     // Platform confirms agreement has been esterblished between two parties and close bond
     // Only admin can close bond
     // Both parties has to first confirm bond is completed before bond can be closed
-    function closeBond(uint256 _bondId) public {
+    function closeBond(uint256 _bondId) public onlyAdmin isValidated(_bondId) {
         Bond storage bond = bonds[_bondId];
-        require(payable(msg.sender) == admin, "Only admin can close bond");
-        require(bond.validated == true, "Bond has not been validated yet");
         require(
             bond.confirmations[0] != address(0),
             "First party has not confirmed transaction"
@@ -132,24 +142,18 @@ contract ZeroBond {
     }
 
     // Get total fees sgored in the contract
-    function getContractBalance() public view returns (uint256) {
-        require(msg.sender == admin, "Only admin can check balance");
+    function getContractBalance() public view onlyAdmin returns (uint256){
         uint256 bal = address(this).balance;
         return bal;
     }
 
     //
-    function getTotalAdminFees() public view returns (uint256) {
-        require(msg.sender == admin, "Only admin can check fees");
+    function getTotalAdminFees() public view onlyAdmin returns (uint256) {
         return adminFees;
     }
 
     // Withdraw accumulated fees in contract
-    function withdrawAccumulatedFees() public returns (bool) {
-        require(
-            msg.sender == admin,
-            "Only admin can withdraw accumulated fees"
-        );
+    function withdrawAccumulatedFees() public  onlyAdmin returns (bool) {
         uint256 bal = adminFees;
         (bool success, ) = payable(msg.sender).call{value: bal}("");
         adminFees = 0; // reset value after withdrawal
